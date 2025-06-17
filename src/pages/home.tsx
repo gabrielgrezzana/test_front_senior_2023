@@ -7,10 +7,21 @@ import { useState, useEffect } from "react";
 import type { MovieProps } from "../types/movie";
 import { useQuery } from "@tanstack/react-query";
 import Loading from "../components/loading";
+import useDebouce from "../hooks/useDebouce";
 
 export default function Home() {  
 
   const[currentData, setCurrentData] = useState<MovieProps[] | undefined>([]);
+  const [searchTerm, setSearchTerm] = useState('');
+  const debouncedSearchTerm = useDebouce(searchTerm, 500);
+
+  useEffect(() => {
+    if(debouncedSearchTerm) {
+      handleSearch(debouncedSearchTerm);
+    }else{
+      setCurrentData(data);
+    }
+  },[debouncedSearchTerm])
 
   const { data, isLoading, error } = useQuery<MovieProps[]>({
     queryKey: ['movies'],
@@ -39,6 +50,8 @@ export default function Home() {
       </Page>
     );
   }
+
+  
  
   const handleSearch = (search: string) => {
     const filteredData = data?.filter((item) => item.name.toLowerCase().includes(search.toLowerCase()));
@@ -65,18 +78,24 @@ export default function Home() {
     {isLoading && <Loading />}
     <Box width={'100%'} height={'100%'} display={'flex'} flexDirection={'column'} alignItems={'center'}>
       <Title_Sort 
-        goSearch={handleSearch} 
+        goSearch={(e) => setSearchTerm(e)} 
         goSort={handleSort} 
         movies={data || []}
       />
-      <Box width={'90%'} height={'90%'} display={'grid'} gridTemplateColumns={'repeat(3, 1fr)'} gap={8} alignItems={'center'} justifyContent={'center'} marginTop={'50px'} marginBottom={'50px'} overflow={'auto'}>
-      
-      {currentData && currentData?.map((item) => {
-          return (
-            <Card key={item.id} item={item} />
-          )
-        })}      
-    </Box>      
+      <Box 
+        width="90%" 
+        display="grid" 
+        gridTemplateColumns="repeat(auto-fit, minmax(300px, 1fr))" // Responsivo
+        gap={8}
+        p={4}
+      >
+        
+        {currentData && currentData?.map((item) => {
+            return (
+              <Card key={item.id} item={item} />
+            )
+          })}      
+      </Box>      
     </Box>
   </Page>
   )
